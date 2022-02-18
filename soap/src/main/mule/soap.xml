@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="fd6e36b7-e630-4c5f-8b44-39247a71c45a" >
+		<http:listener-connection host="0.0.0.0" port="8768" />
+	</http:listener-config>
+	
+	<flow name="soapFlow" doc:id="ba09e45c-762b-4f2b-aa18-3136a4b3ac23" >
+		<http:listener doc:name="Listener" doc:id="82285b42-7e33-4d7c-bbbd-73d121e41640" config-ref="HTTP_Listener_config" path="manju"/>
+		<set-variable value="#[attributes.queryParams.number1]" doc:name="number1" doc:id="6477fa53-3f30-4853-b994-31c096ef7dc8" variableName="number1"/>
+		<set-variable value="#[attributes.queryParams.number2]" doc:name="number2" doc:id="42ce666e-fa1d-4b11-8b43-3af5ad31d736" variableName="number2"/>
+		<ee:transform doc:name="Transform Message" doc:id="9916906a-bad9-48c2-8ac5-9264e75fcee1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://tempuri.org/
+---
+{
+	ns0#Divide: {
+		ns0#intA: vars.number1 as Number,
+		ns0#intB: vars.number2 as Number
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="Divide" doc:name="Consume" doc:id="dd3f211b-b5af-473b-a2a9-aea5d3384a73" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="48afc0c6-1fe7-4623-81aa-fb29c48087d4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="bdb9ca57-6b03-40e2-bd33-f81d2201dc4f" message="#[payload]"/>
+	</flow>
+</mule>
