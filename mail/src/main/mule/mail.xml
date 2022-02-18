@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="bf8462bc-a518-4d67-882b-3b0cd2fc9e5d" >
+		<http:listener-connection host="0.0.0.0" port="8902" />
+	</http:listener-config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="1298c681-666b-4004-8a37-94ceeadfb6d5" >
+		<email:smtps-connection host="smtp.gmail.com" user="pomanju4@gmail.com" password="pomanju4@" >
+			<tls:context >
+				<tls:trust-store insecure="true" />
+			</tls:context>
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtps-connection>
+	</email:smtp-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="0b1583bd-3837-4cc6-888e-b457b75c6481" >
+		<file:connection workingDir="F:\New folder" />
+	</file:config>
+	<flow name="mailFlow" doc:id="92da1b3d-5a0b-4504-afe3-042854f9e7da" >
+		<http:listener doc:name="Listener" doc:id="93f69705-5168-43b5-a791-9160146d9417" config-ref="HTTP_Listener_config" path="manju"/>
+		<set-variable value="#[attributes.queryParams.file]" doc:name="Set Variable" doc:id="a4ca6b63-40bc-473b-beed-79623162dd67" variableName="filename"/>
+		<file:read doc:name="Read" doc:id="fce4e06f-2f63-4142-9191-6018a34d8d6b" config-ref="File_Config" path='#[vars.filename ++ ".txt"]'/>
+		<email:send doc:name="Send" doc:id="7bbefa1c-aded-450e-9a45-1dc116bfe26c" config-ref="Email_SMTP" fromAddress="pomanju4@gmail.com" subject="email from manju">
+			<email:to-addresses >
+				<email:to-address value="manjuroyal1991@gmail.com" />
+			</email:to-addresses>
+			<email:body contentTransferEncoding="Quoted-Printable">
+				<email:content ><![CDATA[#["Please find the attached details"]]]></email:content>
+			</email:body>
+			<email:attachments ><![CDATA[#[{
+	"Attachment.txt":payload
+}]]]></email:attachments>
+		</email:send>
+		<logger level="INFO" doc:name="Logger" doc:id="40bdafcf-1f6e-4c40-b0c5-d3a7abf9440f" message="mail sent successfully"/>
+	</flow>
+</mule>
