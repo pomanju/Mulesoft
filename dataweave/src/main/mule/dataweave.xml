@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="98a79907-26fd-4280-a1dc-f95eaab0751b">
+		<http:listener-connection host="0.0.0.0" port="8097" />
+	</http:listener-config>
+	<flow name="dataweaveFlow" doc:id="e2366ac5-7502-4a07-b4dd-61a177a4eac9" >
+		<http:listener doc:name="Listener" doc:id="81a8bbcb-2161-49f9-a6c6-ca0028202227" config-ref="HTTP_Listener_config" path="data"/>
+		<ee:transform doc:name="Transform Message" doc:id="2ab6d592-183c-4a4b-a2ba-deed18de0f9a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+
+---
+
+"my name is " ++ payload.name ++ " working in " ++ payload.org ++ " in " ++ payload.city]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="map" doc:id="2c5de995-839a-4c5d-ab62-69eb3365ed79" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+var a = [
+	{
+		"name":"manju",
+		"id":123,
+		"organization":["hgs","cts","chandu"]
+	},
+	{
+		"name":"chandu",
+		"id":125,
+		"organization":["optum","cigna","humana"]
+	},
+	{
+		"name":"navi",
+		"id":127,
+		"organization":["cts","bcbs","aetna"]
+	},
+	{
+		"name":"raju",
+		"id":129,
+		"organization":["tcs","optum"]
+	}
+]
+---
+// manju: chandu: a when we have multiple objects in side array we have to use two headings
+// when i have single array
+/*
+ * 
+ a map {
+	employeename : $.name,
+	"employee id" : $.id,
+	company: $.organization,
+	discription: $.name ++ " working in " ++ $.organization,
+	number: 1+$$
+}
+* 
+*/
+// when i have multiple arrays inside array
+
+a map ((item, index) -> {
+	name: item.name,
+	id: item.id,
+	orgname: item.organization map {
+		organization : $
+	}
+})
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Mule object" doc:id="874ff48e-6798-47c8-ad2d-cb71aa3734fd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+var a = {
+		
+		
+		"name":"raju",
+		"id":129,
+		"organization":"chandu"
+		
+		}
+---
+a mapObject {
+	"value": $,
+	"key":$$,
+	"index":$$$,
+	"number":1+$$$
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="filter" doc:id="6b3c22ba-a2ad-4353-a513-45bf40141ef5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+var a =  
+        [ 
+		{
+		"name":"manju",
+		"marks":50,
+		"organization":"ogs"
+		},
+		{
+		"name":"chandu",
+		"marks":23,
+		"organization":"cigna"
+		},
+		{
+		"name":"navi",
+		"marks":14,
+		"organization":"cts"
+		},
+		{
+		"name":"raju",
+		"marks":70,
+		"organization":"tcs"
+		}
+		]
+output application/json
+---
+
+a map (
+	{
+	"name":$.name,
+	"marks":$.marks,
+	"organiation":$.organization
+	}
+) filter $.marks<50]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="groupby" doc:id="d46f16df-7fc1-49c0-adb1-31f1e9189129" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+var a =  
+        [ 
+		{
+		"name":"manju",
+		"marks":50,
+		"organization":"ogs"
+		},
+		{
+		"name":"chandu",
+		"marks":23,
+		"organization":"cigna"
+		},
+		{
+		"name":"navi",
+		"marks":14,
+		"organization":"cts"
+		},
+		{
+		"name":"raju",
+		"marks":70,
+		"organization":"tcs"
+		}
+		]
+output application/json
+---
+
+a map {
+	name:$.name,
+    marks:$.marks,
+    org:$.organization,
+    status: if($.marks >45) "PASS" else "FAIL"
+    } groupBy $.status]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="order by" doc:id="bb3e3feb-4d50-4424-aa43-cc031d5ef098" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+var a =  
+        [ 
+		{
+		"name":"manju",
+		"marks":50,
+		"organization":"ogs"
+		},
+		{
+		"name":"chandu",
+		"marks":23,
+		"organization":"cigna"
+		},
+		{
+		"name":"navi",
+		"marks":14,
+		"organization":"cts"
+		},
+		{
+		"name":"raju",
+		"marks":70,
+		"organization":"tcs"
+		}
+		]
+output application/json
+---
+(a map {
+	name:$.name,
+    marks:$.marks,
+    org:$.organization,
+    status: if($.marks >45) "PASS" else "FAIL"
+    } orderBy $.marks) [ -1 to 0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="writing function" doc:id="929beb54-c228-42ea-9581-b804218f94a4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+var a =  [
+    {
+        name:"chandu",
+        id:123,
+        "maths":23,
+        "science":56,
+        "social":32
+    },
+    {
+        name:"manju",
+        id:125,
+        "maths":74,
+        "science":24,
+        "social":46
+    },
+    {
+        name:"raju",
+        id:127,
+        "maths":89,
+        "science":23,
+        "social":32
+    }
+]
+
+fun resulte(marks)= if (marks >35) "pass" else "fail"
+output application/json
+---
+a map {
+    name:$.name,
+    id:$.id,
+    subjectwisedetails: {
+        maths: {
+            subject:$.maths,
+            result: resulte($.maths)
+        },
+        science: {
+            subject:$.science,
+            result: resulte($.science)
+        },
+        social: {
+            subject:$.social,
+            result: resulte($.social)
+        }
+    }
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="own function" doc:id="19a8eb0f-2282-4ca8-9ac7-8c4783375d30" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+fun manju(name:String,year:Number) = name ++ "birth year " ++ year
+---
+manju("chandu ",1992)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="map, filter, ifelse, group by, order by" doc:id="14d9d996-cf07-4f82-a560-c78b1e7256fa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+var a =  
+        [ 
+		{
+		"name":"manju",
+		"marks":50,
+		"organization":"ogs"
+		},
+		{
+		"name":"chandu",
+		"marks":23,
+		"organization":"cigna"
+		},
+		{
+		"name":"navi",
+		"marks":14,
+		"organization":"cts"
+		},
+		{
+		"name":"raju",
+		"marks":70,
+		"organization":"tcs"
+		}
+		]
+var b =  
+		[{
+		"name":"manju",
+		"marks":13,
+		"organization":"chandu"
+		},
+		{
+		"name":"chandu",
+		"marks":43,
+		"organization":"optum"
+		},
+		{
+		"name":"navi",
+		"marks":45,
+		"organization":"bcbs"
+		},
+		{
+		"name":"raju",
+		"marks":90,
+		"organization":"tcs"
+		}]
+output application/json
+---
+
+((flatten(a+b) map {
+    name:$.name,
+    marks:$.marks,
+    org:$.organization,
+    status: if($.marks >45) "PASS" else "FAIL"
+}) groupBy $.status) orderBy $$]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
