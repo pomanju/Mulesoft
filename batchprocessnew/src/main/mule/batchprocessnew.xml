@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a1b4a012-853f-44a2-aa60-0ea179681a13" >
+		<http:listener-connection host="0.0.0.0" port="8088" />
+	</http:listener-config>
+	<flow name="batchprocessnewFlow" doc:id="fd67bb3b-0808-4c97-972d-95d2b4ffce81" >
+		<http:listener doc:name="Listener" doc:id="50c926cb-5e67-43bb-bef9-25d7493b5308" config-ref="HTTP_Listener_config" path="newbatch"/>
+		<set-payload value='#[[1,"a",2,"b","c",5,6,7]]' doc:name="Set Payload" doc:id="d69f1584-2573-47ea-9197-f851354b2d53" />
+		<batch:job jobName="batchprocessnewBatch_Job" doc:id="5b528d28-2666-4155-bbab-a5db6bc998b6" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="34d44f0b-4ec4-4390-88bb-7082aa358c04" acceptPolicy="ALL">
+					<set-payload value="#[payload * 10]" doc:name="payload * 10" doc:id="910b22c5-ce39-4aa8-868f-2751ff5952cc" />
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="094af884-dc29-4aba-ada4-a276e36be756" size="5">
+						<logger level="INFO" doc:name="Logger" doc:id="ce047b97-748d-4cd5-bb4d-88d4d9c59f22" message="#[payload]"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="8e414b02-df6c-4161-8a17-edeae2cbcba0" message="payload"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>
